@@ -264,7 +264,12 @@ h1 {
   );
 }
 
-/* corner brackets */
+/* corner brackets — overlay, so they never take up layout space */
+.corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
 .corners i {
   position: absolute;
   width: 12px;
@@ -291,10 +296,7 @@ h1 {
   cursor: pointer;
   color: var(--text);
   font: inherit;
-  background:
-    linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 16px 16px,
-    linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 16px 16px,
-    rgba(0, 0, 0, 0.35);
+  background-color: rgba(0, 0, 0, 0.35);
   border: 1px dashed var(--line-strong);
   transition: border-color 0.15s, background-color 0.15s;
 }
@@ -331,25 +333,26 @@ h1 {
   letter-spacing: 0.06em;
 }
 
-.crosshair {
-  position: relative;
-  width: 44px;
-  height: 44px;
+.upload-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
   margin-bottom: 6px;
-  border: 1px solid var(--line-strong);
-  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(61, 255, 176, 0.35);
+  border-radius: 12px;
+  transition: transform 0.15s;
 }
-.crosshair::before,
-.crosshair::after {
-  content: "";
-  position: absolute;
-  background: var(--accent);
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+.upload-icon svg {
+  width: 26px;
+  height: 26px;
 }
-.crosshair::before { width: 64px; height: 1px; }
-.crosshair::after { width: 1px; height: 64px; }
+.drop:hover .upload-icon,
+.drop.is-drag .upload-icon {
+  transform: translateY(-2px);
+}
 
 .scan {
   position: absolute;
