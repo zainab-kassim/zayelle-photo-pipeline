@@ -1,0 +1,19 @@
+# dependencies
+node_modules/
+
+# local photos and generated files
+samples/*
+!samples/.gitkeep
+output/*
+!output/.gitkeep
+
+# builds
+dist/
+.next/
+.aws-sam/
+next-env.d.ts
+*.tsbuildinfo
+
+# env / OS
+.env*
+.DS_Store

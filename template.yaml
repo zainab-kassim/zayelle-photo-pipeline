@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Zayelle photo pipeline — upload an original to S3, get two WebP sizes back.
+
+Globals:
+  Function:
+    Runtime: nodejs22.x
+    Architectures: [arm64]
+    MemorySize: 1024
+    Timeout: 30
+
+Resources:
+  # Originals land here. Uploading triggers ResizeFunction.
+  OriginalsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub zayelle-originals-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # Generated WebPs go here. Separate bucket = no recursive trigger.
+  ProcessedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub zayelle-processed-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ResizeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      # `npm run build:lambda` bundles src/handler.ts into dist/handler.js.
+      # SAM then packs the project (package.json "files" = dist only) and
+      # installs production deps (just sharp). Build with --use-container so
+      # sharp gets its Linux arm64 binary instead of your Mac's.
+      CodeUri: ./
+      Handler: dist/handler.handler
+      Description: Resizes S3 originals into large + thumb WebPs with Sharp
+      Environment:
+        Variables:
+          OUTPUT_BUCKET: !Ref ProcessedBucket
+      Policies:
+        # Name built with !Sub instead of !Ref to avoid a circular dependency
+        # (the bucket's notification config already references this function).
+        - S3ReadPolicy:
+            BucketName: !Sub zayelle-originals-${AWS::AccountId}-${AWS::Region}
+        - S3CrudPolicy:
+            BucketName: !Ref ProcessedBucket
+      Events:
+        OriginalUploaded:
+          Type: S3
+          Properties:
+            Bucket: !Ref OriginalsBucket
+            Events: s3:ObjectCreated:*
+
+Outputs:
+  OriginalsBucketName:
+    Description: Upload photos here
+    Value: !Ref OriginalsBucket
+  ProcessedBucketName:
+    Description: WebP outputs appear here
+    Value: !Ref ProcessedBucket
+  ResizeFunctionName:
+    Value: !Ref ResizeFunction
