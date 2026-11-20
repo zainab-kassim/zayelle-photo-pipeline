@@ -115,7 +115,17 @@ npm run dev
 
 Open the URL Next prints (usually http://localhost:3000), drop a photo in, and hit **Run pipeline**. You get a preview, dimensions, file size and % saved for each output, plus a download link. Copies are saved to `output/` as well.
 
-### 3. Deploy to AWS
+### 3. Host the UI on Vercel
+
+The upload UI is a standard Next.js app, so it deploys to [Vercel](https://vercel.com) as-is. Import the GitHub repo in the Vercel dashboard; it detects Next.js and needs no extra settings. Or from the terminal:
+
+```bash
+npx vercel
+```
+
+> **Heads up:** Vercel's filesystem is read-only, so the API route can't save files to `output/` there. On Vercel, return the WebPs to the browser only, or upload them to S3.
+
+### 4. Deploy the Lambda pipeline to AWS (optional)
 
 ```bash
 npm run deploy
@@ -159,7 +169,7 @@ Outputs are written with `Content-Type: image/webp` and a long-lived `Cache-Cont
 
 ### Cost
 
-For a demo this costs roughly nothing. Lambda's always-free allowance covers 1M requests per month, and a handful of WebPs in S3 costs fractions of a cent. When you're done, tear it down:
+At low volume this costs very little: Lambda's always-free allowance covers 1M requests per month, and WebPs are small, so S3 storage stays cheap. To remove everything:
 
 ```bash
 aws s3 rm s3://<OriginalsBucketName> --recursive
@@ -167,20 +177,10 @@ aws s3 rm s3://<ProcessedBucketName> --recursive
 sam delete
 ```
 
-## Demo results
-
-_Fill this in after running the pipeline on `samples/red-dress.jpg`._
-
-| File                     | Dimensions | Size | vs original |
-| ------------------------ | ---------- | ---- | ----------- |
-| `red-dress.jpg` (original) | —        | —    | —           |
-| `red-dress-large.webp`   | —          | —    | —           |
-| `red-dress-thumb.webp`   | —          | —    | —           |
-
 ## Tech stack
 
 - **[Sharp](https://sharp.pixelplumbing.com/)**: fast image processing on top of libvips
-- **[Next.js](https://nextjs.org/)** + **React**: upload UI and API route
+- **[Next.js](https://nextjs.org/)** + **React**: upload UI and API route, hosted on **[Vercel](https://vercel.com)**
 - **[AWS SAM](https://aws.amazon.com/serverless/sam/)**: infrastructure as code for Lambda + S3
 - **[esbuild](https://esbuild.github.io/)**: bundles the Lambda handler
 - **[tsx](https://tsx.is/)**: runs TypeScript directly for local testing
